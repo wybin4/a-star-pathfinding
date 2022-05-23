@@ -4,4 +4,4 @@
 
 # результат
 
-![](https://github.com/ajdivotf/a-star-pathfinding/blob/main/results/pathfinding_in_action.gif)
+![](https://github.com/ajdivotf/a-star-pathfinding/blob/master/results/pathfinding_in_action.gif)
