@@ -12,52 +12,52 @@ typedef boost::grid_graph<2> grid;
 typedef boost::graph_traits<grid>::vertex_descriptor vertex_descriptor;
 typedef boost::graph_traits<grid>::vertices_size_type vertices_size_type;
 
-//хэш-функция для вершин
+//С…СЌС€-С„СѓРЅРєС†РёСЏ РґР»СЏ РІРµСЂС€РёРЅ
 struct vertex_hash
 {
     size_t operator()(const vertex_descriptor& descriptor) const
     {
         size_t seed = 0;
-        boost::hash_combine(seed, descriptor[0]); //объединяем хеш-значения х и у
+        boost::hash_combine(seed, descriptor[0]); //РѕР±СЉРµРґРёРЅСЏРµРј С…РµС€-Р·РЅР°С‡РµРЅРёСЏ С… Рё Сѓ
         boost::hash_combine(seed, descriptor[1]);
         return seed;
     }
 };
 
-typedef boost::unordered_set<vertex_descriptor, vertex_hash> vertex_set; //структура данных для хранения вершин, только уникальные значения
-//извлечение на основе хэш-функции
-typedef boost::vertex_subset_complement_filter<grid, vertex_set>::type filtered_grid;//граф для фильтрации границ
-//"удаляет" ненужные вершины, создавая новый граф
+typedef boost::unordered_set<vertex_descriptor, vertex_hash> vertex_set; //СЃС‚СЂСѓРєС‚СѓСЂР° РґР°РЅРЅС‹С… РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РІРµСЂС€РёРЅ, С‚РѕР»СЊРєРѕ СѓРЅРёРєР°Р»СЊРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ
+//РёР·РІР»РµС‡РµРЅРёРµ РЅР° РѕСЃРЅРѕРІРµ С…СЌС€-С„СѓРЅРєС†РёРё
+typedef boost::vertex_subset_complement_filter<grid, vertex_set>::type filtered_grid;//РіСЂР°С„ РґР»СЏ С„РёР»СЊС‚СЂР°С†РёРё РіСЂР°РЅРёС†
+//"СѓРґР°Р»СЏРµС‚" РЅРµРЅСѓР¶РЅС‹Рµ РІРµСЂС€РёРЅС‹, СЃРѕР·РґР°РІР°СЏ РЅРѕРІС‹Р№ РіСЂР°С„
 class field
 {
 private:
-    grid underlying_grid; //вспомогательная сетка
-    vertex_set barriers; //границы
-    filtered_grid main_grid; //основная сетка
-    vertex_set shortest_path; //вершины, являющиеся кратчайшем путём
+    grid underlying_grid; //РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅР°СЏ СЃРµС‚РєР°
+    vertex_set barriers; //РіСЂР°РЅРёС†С‹
+    filtered_grid main_grid; //РѕСЃРЅРѕРІРЅР°СЏ СЃРµС‚РєР°
+    vertex_set shortest_path; //РІРµСЂС€РёРЅС‹, СЏРІР»СЏСЋС‰РёРµСЃСЏ РєСЂР°С‚С‡Р°Р№С€РµРј РїСѓС‚С‘Рј
 
-    vertex_descriptor source; //точка старта
-    vertex_descriptor goal; //целевая точка
+    vertex_descriptor source; //С‚РѕС‡РєР° СЃС‚Р°СЂС‚Р°
+    vertex_descriptor goal; //С†РµР»РµРІР°СЏ С‚РѕС‡РєР°
 
-    bool need_update; //при изменении точки начала/цели необходимо обновить картинку и пересчитать путь
-    //создаём двумерную вспомогательную сетку указанной размерности
+    bool need_update; //РїСЂРё РёР·РјРµРЅРµРЅРёРё С‚РѕС‡РєРё РЅР°С‡Р°Р»Р°/С†РµР»Рё РЅРµРѕР±С…РѕРґРёРјРѕ РѕР±РЅРѕРІРёС‚СЊ РєР°СЂС‚РёРЅРєСѓ Рё РїРµСЂРµСЃС‡РёС‚Р°С‚СЊ РїСѓС‚СЊ
+    //СЃРѕР·РґР°С‘Рј РґРІСѓРјРµСЂРЅСѓСЋ РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅСѓСЋ СЃРµС‚РєСѓ СѓРєР°Р·Р°РЅРЅРѕР№ СЂР°Р·РјРµСЂРЅРѕСЃС‚Рё
     grid create_grid(size_t x, size_t y)
     {
         boost::array<size_t, 2> lengths = { {x, y} };
         return grid(lengths);
     }
-    bool has_barrier(vertex_descriptor vertex) const //если попали на границу, то возвращаем true
+    bool has_barrier(vertex_descriptor vertex) const //РµСЃР»Рё РїРѕРїР°Р»Рё РЅР° РіСЂР°РЅРёС†Сѓ, С‚Рѕ РІРѕР·РІСЂР°С‰Р°РµРј true
     {
         return barriers.find(vertex) != barriers.end();
     }
-    //фильтруем вспомогательную сетку и получаем основную
+    //С„РёР»СЊС‚СЂСѓРµРј РІСЃРїРѕРјРѕРіР°С‚РµР»СЊРЅСѓСЋ СЃРµС‚РєСѓ Рё РїРѕР»СѓС‡Р°РµРј РѕСЃРЅРѕРІРЅСѓСЋ
     filtered_grid create_barrier_grid()
     {
         return boost::make_vertex_subset_complement_filter(underlying_grid, barriers);
     }
 
 public:
-    //изначально need_update = true тк уже нужно увидеть решение
+    //РёР·РЅР°С‡Р°Р»СЊРЅРѕ need_update = true С‚Рє СѓР¶Рµ РЅСѓР¶РЅРѕ СѓРІРёРґРµС‚СЊ СЂРµС€РµРЅРёРµ
     field() : underlying_grid(create_grid(0, 0)), main_grid(create_barrier_grid()) { need_update = true;  source = vertex(0, underlying_grid), goal = vertex(num_vertices(underlying_grid) - 1, underlying_grid); };
     field(size_t x, size_t y) : underlying_grid(create_grid(x, y)), main_grid(create_barrier_grid()) { need_update = true;  source = vertex(0, underlying_grid), goal = vertex(num_vertices(underlying_grid) - 1, underlying_grid); };
 
@@ -67,18 +67,18 @@ public:
     void set_source(const vertex_descriptor& src) { source = src; }
     void set_goal(const vertex_descriptor& g) { goal = g; }
 
-    bool solve(); //ключевая функция поиска пути
+    bool solve(); //РєР»СЋС‡РµРІР°СЏ С„СѓРЅРєС†РёСЏ РїРѕРёСЃРєР° РїСѓС‚Рё
     bool solved() const { return !shortest_path.empty(); }
     bool solution_contains(vertex_descriptor vertex) const
     {
         return shortest_path.find(vertex) != shortest_path.end();
     }
-    void update(); //обновляем картинку
-    void draw(); //создаём картинку
+    void update(); //РѕР±РЅРѕРІР»СЏРµРј РєР°СЂС‚РёРЅРєСѓ
+    void draw(); //СЃРѕР·РґР°С‘Рј РєР°СЂС‚РёРЅРєСѓ
     friend void random_barriers(field&);
 };
 
-//эвклидова метрика для расстояния между текущей вершиной и целью
+//СЌРІРєР»РёРґРѕРІР° РјРµС‚СЂРёРєР° РґР»СЏ СЂР°СЃСЃС‚РѕСЏРЅРёСЏ РјРµР¶РґСѓ С‚РµРєСѓС‰РµР№ РІРµСЂС€РёРЅРѕР№ Рё С†РµР»СЊСЋ
 class euclidean_heuristic :public boost::astar_heuristic<filtered_grid, double>
 {
 private:
@@ -93,10 +93,10 @@ public:
     }
 };
 
-//возбуждаем исключение, если нашли путь
+//РІРѕР·Р±СѓР¶РґР°РµРј РёСЃРєР»СЋС‡РµРЅРёРµ, РµСЃР»Рё РЅР°С€Р»Рё РїСѓС‚СЊ
 struct found_goal {};
 
-//класс-посетитель, чей метод examine_vertex возбуждает исключение
+//РєР»Р°СЃСЃ-РїРѕСЃРµС‚РёС‚РµР»СЊ, С‡РµР№ РјРµС‚РѕРґ examine_vertex РІРѕР·Р±СѓР¶РґР°РµС‚ РёСЃРєР»СЋС‡РµРЅРёРµ
 struct astar_goal_visitor : public boost::default_astar_visitor
 {
 private:
@@ -110,26 +110,26 @@ public:
     }
 };
 
-//обходим граф-сетку. возвращаем true, если нашли путь
+//РѕР±С…РѕРґРёРј РіСЂР°С„-СЃРµС‚РєСѓ. РІРѕР·РІСЂР°С‰Р°РµРј true, РµСЃР»Рё РЅР°С€Р»Рё РїСѓС‚СЊ
 bool field::solve()
 {
     typedef boost::unordered_map<vertex_descriptor, double, vertex_hash> dist_map;
     typedef boost::unordered_map<vertex_descriptor, vertex_descriptor, vertex_hash> pred_map;
 
-    boost::static_property_map<double> weight(1); //расстояние между клетками сетки
-    pred_map predecessor; //предшественники
+    boost::static_property_map<double> weight(1); //СЂР°СЃСЃС‚РѕСЏРЅРёРµ РјРµР¶РґСѓ РєР»РµС‚РєР°РјРё СЃРµС‚РєРё
+    pred_map predecessor; //РїСЂРµРґС€РµСЃС‚РІРµРЅРЅРёРєРё
     boost::associative_property_map<pred_map> pred_pmap(predecessor);
-    dist_map distance; //карта фактических расстояний
+    dist_map distance; //РєР°СЂС‚Р° С„Р°РєС‚РёС‡РµСЃРєРёС… СЂР°СЃСЃС‚РѕСЏРЅРёР№
     boost::associative_property_map<dist_map> dist_pmap(distance);
 
     vertex_descriptor src = get_source();
     vertex_descriptor g = get_goal();
     euclidean_heuristic heuristic(g);
     astar_goal_visitor visitor(g);
-    shortest_path.clear(); //обязательное очищение, чтобы пути не накладывались друг на друга
+    shortest_path.clear(); //РѕР±СЏР·Р°С‚РµР»СЊРЅРѕРµ РѕС‡РёС‰РµРЅРёРµ, С‡С‚РѕР±С‹ РїСѓС‚Рё РЅРµ РЅР°РєР»Р°РґС‹РІР°Р»РёСЃСЊ РґСЂСѓРі РЅР° РґСЂСѓРіР°
     try
-    {//поиск пути с функцией, которая принимает ссылку на граф-сетку, координаты исходной точки, метрику
-        //из predecessor извлекается результат и расстояние distance
+    {//РїРѕРёСЃРє РїСѓС‚Рё СЃ С„СѓРЅРєС†РёРµР№, РєРѕС‚РѕСЂР°СЏ РїСЂРёРЅРёРјР°РµС‚ СЃСЃС‹Р»РєСѓ РЅР° РіСЂР°С„-СЃРµС‚РєСѓ, РєРѕРѕСЂРґРёРЅР°С‚С‹ РёСЃС…РѕРґРЅРѕР№ С‚РѕС‡РєРё, РјРµС‚СЂРёРєСѓ
+        //РёР· predecessor РёР·РІР»РµРєР°РµС‚СЃСЏ СЂРµР·СѓР»СЊС‚Р°С‚ Рё СЂР°СЃСЃС‚РѕСЏРЅРёРµ distance
         astar_search(main_grid, src, heuristic,
             boost::weight_map(weight)
             .predecessor_map(pred_pmap)
@@ -138,8 +138,8 @@ bool field::solve()
     }
     catch (found_goal fg)
     {
-        //идём в обратном направлении от цели через цепочку предшественников, добавляя
-        //вершины к пути решения
+        //РёРґС‘Рј РІ РѕР±СЂР°С‚РЅРѕРј РЅР°РїСЂР°РІР»РµРЅРёРё РѕС‚ С†РµР»Рё С‡РµСЂРµР· С†РµРїРѕС‡РєСѓ РїСЂРµРґС€РµСЃС‚РІРµРЅРЅРёРєРѕРІ, РґРѕР±Р°РІР»СЏСЏ
+        //РІРµСЂС€РёРЅС‹ Рє РїСѓС‚Рё СЂРµС€РµРЅРёСЏ
         for (vertex_descriptor vertex = g; vertex != src; vertex = predecessor[vertex])
             shortest_path.insert(vertex);
         shortest_path.insert(src);
@@ -148,18 +148,18 @@ bool field::solve()
     return false;
 }
 
-//размеры окна
+//СЂР°Р·РјРµСЂС‹ РѕРєРЅР°
 constexpr float window_width = 900;
 constexpr float window_height = 450;
 
 sf::RenderWindow window(sf::VideoMode(window_width, window_height), "A* Pathfinder", sf::Style::Close);
 sf::Event evnt;
 
-const sf::Vector2f tile_size = { 45, 45 }; //размер клетки
+const sf::Vector2f tile_size = { 45, 45 }; //СЂР°Р·РјРµСЂ РєР»РµС‚РєРё
 const size_t collumns_x = window_width / tile_size.x;
 const size_t collumns_y = window_height / tile_size.y;
 
-//цвета фигурок
+//С†РІРµС‚Р° С„РёРіСѓСЂРѕРє
 const sf::Color outer_border_color = sf::Color::Black;
 const sf::Color source_color = sf::Color::Blue;
 const sf::Color goal_color = sf::Color::Red;
@@ -168,23 +168,23 @@ const sf::Color barrier_color = sf::Color::Black;
 
 void field::update()
 {
-    //координаты мышки
+    //РєРѕРѕСЂРґРёРЅР°С‚С‹ РјС‹С€РєРё
     int x = sf::Mouse::getPosition(window).x / tile_size.x;
     int y = sf::Mouse::getPosition(window).y / tile_size.y;
 
     if (x >= 0 && x < collumns_x && y >= 0 && y < collumns_y)
     {
-        vertex_descriptor coordinates = { { x, vertices_size_type(y) } }; //преобразуем в нужный тип для сравнения
+        vertex_descriptor coordinates = { { x, vertices_size_type(y) } }; //РїСЂРµРѕР±СЂР°Р·СѓРµРј РІ РЅСѓР¶РЅС‹Р№ С‚РёРї РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ
         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
-        {//меняем начальное положение по левой кнопке мыши
-            if (get_goal() != coordinates and !has_barrier(coordinates)) //чтобы не совпали положения начала и цели и мы не попали в границу
+        {//РјРµРЅСЏРµРј РЅР°С‡Р°Р»СЊРЅРѕРµ РїРѕР»РѕР¶РµРЅРёРµ РїРѕ Р»РµРІРѕР№ РєРЅРѕРїРєРµ РјС‹С€Рё
+            if (get_goal() != coordinates and !has_barrier(coordinates)) //С‡С‚РѕР±С‹ РЅРµ СЃРѕРІРїР°Р»Рё РїРѕР»РѕР¶РµРЅРёСЏ РЅР°С‡Р°Р»Р° Рё С†РµР»Рё Рё РјС‹ РЅРµ РїРѕРїР°Р»Рё РІ РіСЂР°РЅРёС†Сѓ
             {
                 set_source(coordinates);
-                need_update = true; //нужно обновить картинку
+                need_update = true; //РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ РєР°СЂС‚РёРЅРєСѓ
             }
         }
         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right))
-        {//меняем положение цели по левой кнопке мыши
+        {//РјРµРЅСЏРµРј РїРѕР»РѕР¶РµРЅРёРµ С†РµР»Рё РїРѕ Р»РµРІРѕР№ РєРЅРѕРїРєРµ РјС‹С€Рё
             if (get_source() != coordinates and !has_barrier(coordinates))
             {
                 set_goal(coordinates);
@@ -192,10 +192,10 @@ void field::update()
             }
         }
     }
-    if (need_update) //если нужно обновить картинку
+    if (need_update) //РµСЃР»Рё РЅСѓР¶РЅРѕ РѕР±РЅРѕРІРёС‚СЊ РєР°СЂС‚РёРЅРєСѓ
     {
-        solve(); //заново обходим граф
-        need_update = false; //уже не нужно
+        solve(); //Р·Р°РЅРѕРІРѕ РѕР±С…РѕРґРёРј РіСЂР°С„
+        need_update = false; //СѓР¶Рµ РЅРµ РЅСѓР¶РЅРѕ
     }
 }
 
@@ -205,61 +205,61 @@ void field::draw()
     {
         for (size_t y = 0; y < collumns_y; y++)
         {
-            vertex_descriptor coordinates = { {x, vertices_size_type(y)} }; //правильный формат координат
+            vertex_descriptor coordinates = { {x, vertices_size_type(y)} }; //РїСЂР°РІРёР»СЊРЅС‹Р№ С„РѕСЂРјР°С‚ РєРѕРѕСЂРґРёРЅР°С‚
 
-            sf::RectangleShape first; //клетки 
+            sf::RectangleShape first; //РєР»РµС‚РєРё 
             sf::RectangleShape second;
-            first.setSize(tile_size); //размер
-            first.setPosition(x * tile_size.x, y * tile_size.y); //местоположение по координатам поля
-            first.setOutlineThickness(tile_size.x / 30); //толщина
-            first.setOutlineColor(outer_border_color); //цвет внешних границ
+            first.setSize(tile_size); //СЂР°Р·РјРµСЂ
+            first.setPosition(x * tile_size.x, y * tile_size.y); //РјРµСЃС‚РѕРїРѕР»РѕР¶РµРЅРёРµ РїРѕ РєРѕРѕСЂРґРёРЅР°С‚Р°Рј РїРѕР»СЏ
+            first.setOutlineThickness(tile_size.x / 30); //С‚РѕР»С‰РёРЅР°
+            first.setOutlineColor(outer_border_color); //С†РІРµС‚ РІРЅРµС€РЅРёС… РіСЂР°РЅРёС†
 
-            if (coordinates == get_goal()) //если это цель, то красный цвет
+            if (coordinates == get_goal()) //РµСЃР»Рё СЌС‚Рѕ С†РµР»СЊ, С‚Рѕ РєСЂР°СЃРЅС‹Р№ С†РІРµС‚
                 first.setFillColor(goal_color);
-            else if (coordinates == get_source()) //если начало, то синий
+            else if (coordinates == get_source()) //РµСЃР»Рё РЅР°С‡Р°Р»Рѕ, С‚Рѕ СЃРёРЅРёР№
                 first.setFillColor(source_color);
-            else if (has_barrier(coordinates)) //если в клетке есть барьер, то чёрный
+            else if (has_barrier(coordinates)) //РµСЃР»Рё РІ РєР»РµС‚РєРµ РµСЃС‚СЊ Р±Р°СЂСЊРµСЂ, С‚Рѕ С‡С‘СЂРЅС‹Р№
                 first.setFillColor(barrier_color);
 
-            second.setOutlineThickness(0); //для пути нулевая толщина границ
+            second.setOutlineThickness(0); //РґР»СЏ РїСѓС‚Рё РЅСѓР»РµРІР°СЏ С‚РѕР»С‰РёРЅР° РіСЂР°РЅРёС†
             if (solution_contains(coordinates) and coordinates != get_source() and coordinates != get_goal())
-            { //если клетка не содержит начала/конца пути, то
-                second.setFillColor(path_color); //зелёный цвет
-                second.setSize({ tile_size.x / 2, tile_size.y / 2 }); //и размер поменьше
-                second.setPosition(x * tile_size.x + tile_size.x / 4, y * tile_size.y + tile_size.y / 4); //соответствующее расположение
+            { //РµСЃР»Рё РєР»РµС‚РєР° РЅРµ СЃРѕРґРµСЂР¶РёС‚ РЅР°С‡Р°Р»Р°/РєРѕРЅС†Р° РїСѓС‚Рё, С‚Рѕ
+                second.setFillColor(path_color); //Р·РµР»С‘РЅС‹Р№ С†РІРµС‚
+                second.setSize({ tile_size.x / 2, tile_size.y / 2 }); //Рё СЂР°Р·РјРµСЂ РїРѕРјРµРЅСЊС€Рµ
+                second.setPosition(x * tile_size.x + tile_size.x / 4, y * tile_size.y + tile_size.y / 4); //СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРµ СЂР°СЃРїРѕР»РѕР¶РµРЅРёРµ
             }
-            //отрисовываем
+            //РѕС‚СЂРёСЃРѕРІС‹РІР°РµРј
             window.draw(first);
             window.draw(second);
         }
     }
 }
 
-void random_barriers(field& f) //случайное размещение барьеров
+void random_barriers(field& f) //СЃР»СѓС‡Р°Р№РЅРѕРµ СЂР°Р·РјРµС‰РµРЅРёРµ Р±Р°СЂСЊРµСЂРѕРІ
 {
     vertices_size_type n = num_vertices(f.underlying_grid);
     vertex_descriptor src = f.get_source();
     vertex_descriptor g = f.get_goal();
-    int barriers = n / 4; //занимают четверть пространства
+    int barriers = n / 4; //Р·Р°РЅРёРјР°СЋС‚ С‡РµС‚РІРµСЂС‚СЊ РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР°
     while (barriers > 0)
     {
-        size_t direction = rand() % 2; //горизонтальное или вертикальное
+        size_t direction = rand() % 2; //РіРѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ РёР»Рё РІРµСЂС‚РёРєР°Р»СЊРЅРѕРµ
         vertices_size_type wall = rand() % 4;
         vertex_descriptor vert = vertex(rand() % (n - 1), f.underlying_grid);
         while (wall)
         {
-            //в начальной и конечной точке не может быть барьеров
+            //РІ РЅР°С‡Р°Р»СЊРЅРѕР№ Рё РєРѕРЅРµС‡РЅРѕР№ С‚РѕС‡РєРµ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ Р±Р°СЂСЊРµСЂРѕРІ
             if (vert != src and vert != g)
             {
                 wall--;
-                if (!f.has_barrier(vert)) //если нет барьера
+                if (!f.has_barrier(vert)) //РµСЃР»Рё РЅРµС‚ Р±Р°СЂСЊРµСЂР°
                 {
-                    f.barriers.insert(vert); //то будет
-                    barriers--; //уменьшаем общее число
+                    f.barriers.insert(vert); //С‚Рѕ Р±СѓРґРµС‚
+                    barriers--; //СѓРјРµРЅСЊС€Р°РµРј РѕР±С‰РµРµ С‡РёСЃР»Рѕ
                 }
             }
-            vertex_descriptor next_vert = f.underlying_grid.next(vert, direction); //следующая вершина в этом направлении
-            if (vert == next_vert)//останавливаем создание стены при достижении края поля            
+            vertex_descriptor next_vert = f.underlying_grid.next(vert, direction); //СЃР»РµРґСѓСЋС‰Р°СЏ РІРµСЂС€РёРЅР° РІ СЌС‚РѕРј РЅР°РїСЂР°РІР»РµРЅРёРё
+            if (vert == next_vert)//РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЃРѕР·РґР°РЅРёРµ СЃС‚РµРЅС‹ РїСЂРё РґРѕСЃС‚РёР¶РµРЅРёРё РєСЂР°СЏ РїРѕР»СЏ            
                 break;
             vert = next_vert;
         }
@@ -268,16 +268,16 @@ void random_barriers(field& f) //случайное размещение барьеров
 
 int main()
 {
-    //параметры поля, оно задано как 20 на 10
+    //РїР°СЂР°РјРµС‚СЂС‹ РїРѕР»СЏ, РѕРЅРѕ Р·Р°РґР°РЅРѕ РєР°Рє 20 РЅР° 10
 
     srand(time(NULL));
-    field f(collumns_x, collumns_y); //создаём поле
-    random_barriers(f); //формируем барьеры
+    field f(collumns_x, collumns_y); //СЃРѕР·РґР°С‘Рј РїРѕР»Рµ
+    random_barriers(f); //С„РѕСЂРјРёСЂСѓРµРј Р±Р°СЂСЊРµСЂС‹
     window.setFramerateLimit(60);
 
     while (window.isOpen())
     {
-        while (window.pollEvent(evnt)) //закрытие окна
+        while (window.pollEvent(evnt)) //Р·Р°РєСЂС‹С‚РёРµ РѕРєРЅР°
             if (evnt.type == sf::Event::Closed) window.close();
         f.update();
         window.clear(sf::Color::White);
